@@ -75,7 +75,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		}
 	}
 
-	if upd.ChannelPost != nil {
+	// if upd.ChannelPost != nil {
 		// log.Printf("%+v\n", upd.ChannelPost)
 		// log.Printf("%+v\n", upd.ChannelPost.Chat)
 		// var newText string
@@ -87,6 +87,9 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		// if err != nil {
 		// 	log.Fatal(err)
 		// }
+	// }
+
+	if upd.Message != nil {
 		log.Printf("%+v\n", upd.Message.Text)
 		log.Printf("%+v\n", upd.Message.Chat)
 		var newText string

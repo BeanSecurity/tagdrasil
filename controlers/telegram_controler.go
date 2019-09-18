@@ -193,11 +193,10 @@ func (t *TelegramControler) TagTreeIntoText(tree treeprint.Tree, tag models.TagN
 	var branch treeprint.Tree
 
 	if len(tag.ChildTags) == 0 {
-		tree.AddNode(tag.String())
+		tree.AddNode("#" + tag.Name)
 	} else {
-		branch = tree.AddBranch(tag.String())
+		branch = tree.AddBranch("#" + tag.Name)
 		for _, currentNode := range tag.ChildTags {
-			// branch = tree.AddBranch(currentNode.String())
 			err := t.TagTreeIntoText(branch, currentNode)
 			if err != nil {
 				return err

@@ -1,14 +1,14 @@
 package controlers
 
 import (
+	"errors"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/xlab/treeprint"
 	"log"
 	"net/http"
 	"regexp"
 	"tagdrasil/manager"
 	"tagdrasil/models"
-	"github.com/xlab/treeprint"
-	"errors"
 )
 
 type TelegramControler struct {
@@ -73,23 +73,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
-
-	// if upd.ChannelPost != nil {
-		// log.Printf("%+v\n", upd.ChannelPost)
-		// log.Printf("%+v\n", upd.ChannelPost.Chat)
-		// var newText string
-
-		// tags := t.ParseTags(upd.ChannelPost.Text)
-		// user := models.User{}
-		// tagHeader := t.TagManager.GetTagHeader(tags, upd.Message.Chat.ID)
-		// _, err = t.bot.Send(tgbotapi.NewEditMessageText(upd.ChannelPost.Chat.ID, upd.ChannelPost.MessageID, newText))
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-	// }
-
-	if upd.Message != nil {
+	} else if upd.Message != nil {
 		log.Printf("%+v\n", upd.Message.Text)
 		log.Printf("%+v\n", upd.Message.Chat)
 		var newText string
@@ -128,6 +112,20 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 			log.Fatal(err)
 		}
 	}
+
+	// if upd.ChannelPost != nil {
+	// log.Printf("%+v\n", upd.ChannelPost)
+	// log.Printf("%+v\n", upd.ChannelPost.Chat)
+	// var newText string
+
+	// tags := t.ParseTags(upd.ChannelPost.Text)
+	// user := models.User{}
+	// tagHeader := t.TagManager.GetTagHeader(tags, upd.Message.Chat.ID)
+	// _, err = t.bot.Send(tgbotapi.NewEditMessageText(upd.ChannelPost.Chat.ID, upd.ChannelPost.MessageID, newText))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// }
 }
 
 func (t *TelegramControler) ParseTags(text string) ([]models.TagNode, error) {

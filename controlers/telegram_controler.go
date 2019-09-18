@@ -106,7 +106,6 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 
 		_, err = t.bot.Send(tgbotapi.NewMessage(
 			upd.Message.Chat.ID,
-			upd.Message.MessageID,
 			newText))
 		if err != nil {
 			log.Fatal(err)

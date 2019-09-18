@@ -79,7 +79,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		var newText string
 		var tagHeader models.TagNode
 
-		tags, err := t.ParseTags(upd.ChannelPost.Text)
+		tags, err := t.ParseTags(upd.Message.Text)
 		if err != nil {
 			log.Fatal(err)
 			_, err = t.bot.Send(tgbotapi.NewMessage(upd.Message.Chat.ID, "sorry, error"))
@@ -105,8 +105,8 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		}
 
 		_, err = t.bot.Send(tgbotapi.NewEditMessageText(
-			upd.ChannelPost.Chat.ID,
-			upd.ChannelPost.MessageID,
+			upd.Message.Chat.ID,
+			upd.Message.MessageID,
 			newText))
 		if err != nil {
 			log.Fatal(err)

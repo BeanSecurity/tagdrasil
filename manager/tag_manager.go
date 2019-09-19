@@ -23,8 +23,8 @@ type TagManager struct {
 	Repo Repository
 }
 
-func NewTagManager(repository Repository) *TagManager {
-	return &TagManager{Repo: repository}
+func NewTagManager(repository Repository) (*TagManager, error) {
+	return &TagManager{Repo: repository}, nil
 }
 
 // func (m *TagManager) GetTagByName(tagName string) (models.TagNode, error) {

@@ -17,12 +17,13 @@ type TelegramControler struct {
 	bot        *tgbotapi.BotAPI
 }
 
-func NewTelegramControler(token, host, port, debug, dsn string, manager manager.TagManager) *TelegramControler {
+func NewTelegramControler(token, host, port, debug string, manager manager.TagManager) (*TelegramControler, error) {
 	url := host + ":443/" + token
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 
 	if debug == "1" {
@@ -34,16 +35,18 @@ func NewTelegramControler(token, host, port, debug, dsn string, manager manager.
 	_, err = bot.SetWebhook(tgbotapi.NewWebhook(url))
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 	info, err := bot.GetWebhookInfo()
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 	if info.LastErrorDate != 0 {
 		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
 	}
 
-	return &TelegramControler{TagManager: manager, port: port, bot: bot}
+	return &TelegramControler{TagManager: manager, port: port, bot: bot}, nil
 }
 
 func (t *TelegramControler) StartListen() {

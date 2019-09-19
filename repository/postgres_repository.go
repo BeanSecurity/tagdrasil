@@ -21,13 +21,23 @@ type TagPostgresRepository struct {
 	db *sql.DB
 }
 
-func NewTagPostgresRepository(dsn string) *TagPostgresRepository {
-	db, err := sql.Open("postgres", dsn)
+// func NewTagPostgresRepository(dsn string) *TagPostgresRepository {
+// 	db, err := sql.Open("postgres", dsn)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	return &TagPostgresRepository{db}
+// 	// return TagPostgresRepository{nil}
+// }
+
+func NewTagPostgresRepository(db *sql.DB) (*TagPostgresRepository, error) {
+	err := db.Ping()
 	if err != nil {
 		log.Fatal(err)
+		return &TagPostgresRepository{}, err
 	}
-	return &TagPostgresRepository{db}
-	// return TagPostgresRepository{nil}
+
+	return &TagPostgresRepository{db}, nil
 }
 
 func (r *TagPostgresRepository) GetTagByName(tagName string, userID int64) (models.TagNode, error) {

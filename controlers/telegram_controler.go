@@ -63,22 +63,23 @@ func (t *TelegramControler) StartListen() {
 func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 	if upd.Message.IsCommand() {
 		var err error
-		msg := tgbotapi.NewMessage(upd.Message.Chat.ID, "")
+		msg := tgbotapi.NewMessage(upd.Message.Chat.ID, "huh")
 		// commandSelect:
 		switch upd.Message.Command() {
 		case "start":
-			msg.Text = "hi"
 			err := t.userStart(upd)
 			if err != nil {
 				log.Fatal(err)
 				msg.Text = "sorry, еггог"
 			}
+			msg.Text = "hi"
 		case "add":
 			err = t.addTags(upd)
 			if err != nil {
 				log.Fatal(err)
 				msg.Text = "sorry, еггог"
 			}
+			msg.Text = "tag added"
 		// case "tags":
 		default:
 			msg.Text = "I dont know that command"

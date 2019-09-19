@@ -13,8 +13,10 @@ import (
 func main() {
 	//init repo
 	dburl := os.Getenv("DATABASE_URL")
-	// dsn := os.Getenv("DATA_SOURCE_NAME")
-	db, err := sql.Open("postgres", dburl)
+	log.Printf("dburl: %s\n", dburl)
+	dsn := os.Getenv("DATA_SOURCE_NAME")
+	log.Printf("dsn: %s\n", dsn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatal(err)
 		return

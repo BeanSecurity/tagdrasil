@@ -11,7 +11,7 @@ type TagNode struct {
 }
 
 type User struct {
-	ID           int64
+	ID           int
 	FirstName    string
 	LastName     string // optional
 	UserName     string // optional

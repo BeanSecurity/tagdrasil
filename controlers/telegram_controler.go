@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"tagdrasil/manager"
 	"tagdrasil/models"
 )
@@ -67,7 +68,17 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		switch upd.Message.Command() {
 		case "start":
 			msg.Text = "hi"
-		// case "add":
+			err := t.userStart(upd)
+			if err != nil {
+				log.Fatal(err)
+				msg.Text = "sorry, еггог"
+			}
+		case "add":
+			err = t.addTags(upd)
+			if err != nil {
+				log.Fatal(err)
+				msg.Text = "sorry, еггог"
+			}
 		// case "tags":
 		default:
 			msg.Text = "I dont know that command"
@@ -78,7 +89,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		}
 	} else if upd.Message != nil {
 		log.Printf("%+v\n", upd.Message.Text)
-		log.Printf("%+v\n", upd.Message.Chat)
+		log.Printf("%+v\n", upd.Message.From)
 		var newText string
 		var tagHeader models.TagNode
 
@@ -89,10 +100,10 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		}
 
 		user := models.User{
-			ID:        upd.Message.Chat.ID,
-			FirstName: upd.Message.Chat.FirstName,
-			LastName:  upd.Message.Chat.LastName,
-			UserName:  upd.Message.Chat.UserName,
+			ID:        upd.Message.From.ID,
+			FirstName: upd.Message.From.FirstName,
+			LastName:  upd.Message.From.LastName,
+			UserName:  upd.Message.From.UserName,
 		}
 
 		tagHeader, err = t.TagManager.GetTagHeader(tags, user)
@@ -117,17 +128,43 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 
 	// if upd.ChannelPost != nil {
 	// log.Printf("%+v\n", upd.ChannelPost)
-	// log.Printf("%+v\n", upd.ChannelPost.Chat)
+	// log.Printf("%+v\n", upd.ChannelPost.From)
 	// var newText string
 
 	// tags := t.ParseTags(upd.ChannelPost.Text)
 	// user := models.User{}
-	// tagHeader := t.TagManager.GetTagHeader(tags, upd.Message.Chat.ID)
-	// _, err = t.bot.Send(tgbotapi.NewEditMessageText(upd.ChannelPost.Chat.ID, upd.ChannelPost.MessageID, newText))
+	// tagHeader := t.TagManager.GetTagHeader(tags, upd.Message.From.ID)
+	// _, err = t.bot.Send(tgbotapi.NewEditMessageText(upd.ChannelPost.From.ID, upd.ChannelPost.MessageID, newText))
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 	// }
+}
+
+// addTags ...
+func (t *TelegramControler) addTags(upd tgbotapi.Update) error {
+	args := strings.Fields(upd.Message.CommandArguments())
+	switch len(args) {
+	case 1:
+		user := mapTgUserToModelUser(*upd.Message.From)
+		err := t.TagManager.AddRootTag(args[0], user)
+		return err
+	case 2:
+		user := mapTgUserToModelUser(*upd.Message.From)
+		err := t.TagManager.AddLeafTag(args[0], args[1], user)
+		return err
+	}
+	return errors.New("too many arguments")
+}
+
+func (t *TelegramControler) userStart(upd tgbotapi.Update) error {
+	tgUser := upd.Message.From
+	user := mapTgUserToModelUser(*tgUser)
+	err := t.TagManager.SaveUser(user)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *TelegramControler) ParseTags(text string) ([]models.TagNode, error) {
@@ -207,4 +244,14 @@ func (t *TelegramControler) TagTreeIntoText(tree treeprint.Tree, tag models.TagN
 		}
 	}
 	return nil
+}
+
+// mapTgUserToModelUser ...
+func mapTgUserToModelUser(tgUser tgbotapi.User) models.User {
+	return models.User{
+		ID:        tgUser.ID,
+		UserName:  tgUser.UserName,
+		FirstName: tgUser.FirstName,
+		LastName:  tgUser.LastName,
+	}
 }

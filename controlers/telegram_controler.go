@@ -67,19 +67,19 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		// commandSelect:
 		switch upd.Message.Command() {
 		case "start":
+			msg.Text = "hi"
 			err := t.userStart(upd)
 			if err != nil {
 				log.Fatal(err)
 				msg.Text = "sorry, еггог"
 			}
-			msg.Text = "hi"
 		case "add":
+			msg.Text = "tag added"
 			err = t.addTags(upd)
 			if err != nil {
 				log.Fatal(err)
 				msg.Text = "sorry, еггог"
 			}
-			msg.Text = "tag added"
 		// case "tags":
 		default:
 			msg.Text = "I dont know that command"

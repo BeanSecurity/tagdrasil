@@ -47,8 +47,9 @@ CREATE TABLE IF NOT EXISTS telegram_user (
 
 CREATE TABLE IF NOT EXISTS tag (
 	tag_id SERIAL PRIMARY KEY,
-	name TEXT NOT NULL UNIQUE ,
-	user_id INTEGER NOT NULL REFERENCES telegram_user ON DELETE CASCADE
+	name TEXT NOT NULL,
+	user_id INTEGER NOT NULL REFERENCES telegram_user ON DELETE CASCADE,
+	UNIQUE(name,user_id)
 );
 
 CREATE TABLE IF NOT EXISTS tag_relations (
@@ -225,7 +226,7 @@ VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;
 		return err
 	}
 
-	// if its a new user, add metatag
+	// if its a new user, add metatag TODO: move to business logic
 	n, err := res.RowsAffected()
 	if err != nil {
 		log.Fatal(err)

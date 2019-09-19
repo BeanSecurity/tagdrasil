@@ -12,9 +12,9 @@ import (
 
 func main() {
 	//init repo
-	// dburl := os.Getenv("DATABASE_URL")
-	dsn := os.Getenv("DATA_SOURCE_NAME")
-	db, err := sql.Open("postgres", dsn)
+	dburl := os.Getenv("DATABASE_URL")
+	// dsn := os.Getenv("DATA_SOURCE_NAME")
+	db, err := sql.Open("postgres", dburl)
 	if err != nil {
 		log.Fatal(err)
 		return

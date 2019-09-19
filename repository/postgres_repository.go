@@ -225,13 +225,13 @@ VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;
 		return err
 	}
 
-	// if its not a new user, add metatag
+	// if its a new user, add metatag
 	n, err := res.RowsAffected()
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
-	if n == 0 {
+	if n != 0 {
 		_, err = r.db.Exec(
 			"INSERT INTO tag (name, user_id) VALUES ($1, $2);",
 			"tagdrasil",

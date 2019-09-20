@@ -100,13 +100,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 			_, err = t.bot.Send(tgbotapi.NewMessage(upd.Message.Chat.ID, "sorry, error"))
 		}
 
-		user := models.User{
-			ID:        upd.Message.From.ID,
-			FirstName: upd.Message.From.FirstName,
-			LastName:  upd.Message.From.LastName,
-			UserName:  upd.Message.From.UserName,
-		}
-
+		user := mapTgUserToModelUser(*upd.Message.From)
 		tagHeader, err = t.TagManager.GetTagHeader(tags, user)
 		if err != nil {
 			log.Fatal(err)

@@ -139,6 +139,11 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 // addTags ...
 func (t *TelegramControler) addTags(upd tgbotapi.Update) error {
 	args := strings.Fields(upd.Message.CommandArguments())
+	for i, _:= range args {
+		if strings.HasPrefix(args[i], "#") {
+			args[i] = args[i][1:]
+		}
+	}
 	switch len(args) {
 	case 1:
 		user := mapTgUserToModelUser(*upd.Message.From)

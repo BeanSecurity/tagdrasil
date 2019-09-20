@@ -221,7 +221,7 @@ func (t *TelegramControler) TagLineIntoText(tag models.TagNode) (string, error) 
 			log.Fatal(err)
 			return "", err
 		}
-		return "#" + tag.Name + "/" + s, nil
+		return "#" + tag.Name + " -> " + s, nil
 	default:
 		err := errors.New("Tag is not the tag line")
 		log.Fatal(err)

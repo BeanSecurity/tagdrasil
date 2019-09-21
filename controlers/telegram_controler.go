@@ -74,11 +74,20 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 				msg.Text = "sorry, еггог"
 			}
 		case "add":
-			msg.Text = "tag added"
 			err = t.addTags(upd)
 			if err != nil {
 				log.Fatal(err)
-				msg.Text = "sorry, еггог"
+				msg.Text = err.Error()
+			} else {
+				msg.Text = "tag added"
+			}
+		case "tags":
+			tree, err := t.getTagBoardTree(upd)
+			if err != nil {
+				log.Fatal(err)
+				msg.Text = err.Error()
+			} else {
+				msg.Text = tree
 			}
 		// case "tags":
 		default:
@@ -139,22 +148,22 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 // addTags ...
 func (t *TelegramControler) addTags(upd tgbotapi.Update) error {
 	args := strings.Fields(upd.Message.CommandArguments())
-	for i, _:= range args {
+	for i, _ := range args {
 		if strings.HasPrefix(args[i], "#") {
 			args[i] = args[i][1:]
 		}
 	}
+	user := mapTgUserToModelUser(*upd.Message.From)
 	switch len(args) {
 	case 1:
-		user := mapTgUserToModelUser(*upd.Message.From)
 		err := t.TagManager.AddRootTag(args[0], user)
 		return err
 	case 2:
-		user := mapTgUserToModelUser(*upd.Message.From)
 		err := t.TagManager.AddLeafTag(args[0], args[1], user)
 		return err
+	default:
+		return errors.New("too many arguments")
 	}
-	return errors.New("too many arguments")
 }
 
 func (t *TelegramControler) userStart(upd tgbotapi.Update) error {
@@ -165,6 +174,25 @@ func (t *TelegramControler) userStart(upd tgbotapi.Update) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TelegramControler) getTagBoardTree(upd tgbotapi.Update) (string, error) {
+	tgUser := upd.Message.From
+	user := mapTgUserToModelUser(*tgUser)
+	tag, err := t.TagManager.GetTagBoardTree(user)
+	if err != nil {
+		return "", err
+	}
+	tree := treeprint.New()
+	tree.SetValue("#" + tag.Name)
+	for _, tag := range tag.ChildTags {
+		err := t.TagTreeIntoText(tree, tag)
+		if err != nil {
+			log.Fatal(err)
+			return "", err
+		}
+	}
+	return tree.String(), nil
 }
 
 func (t *TelegramControler) ParseTags(text string) ([]models.TagNode, error) {

@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	_ "github.com/bmizerany/pq"
 	"log"
 	"tagdrasil/models"
@@ -53,8 +54,8 @@ CREATE TABLE IF NOT EXISTS tag (
 );
 
 CREATE TABLE IF NOT EXISTS tag_relations (
-	parent_tag_id INTEGER REFERENCES tag ON DELETE CASCADE,
-	child_tag_id INTEGER REFERENCES tag ON DELETE CASCADE,
+	parent_tag_id INTEGER NOT NULL REFERENCES tag ON DELETE CASCADE,
+	child_tag_id INTEGER NOT NULL REFERENCES tag ON DELETE CASCADE,
 	UNIQUE(parent_tag_id,child_tag_id)
 );
 `
@@ -129,7 +130,77 @@ SELECT tag_id,name FROM r;
 }
 
 func (r *TagPostgresRepository) GetSubtree(rootTagName string, userID int) (models.TagNode, error) {
-	return models.TagNode{ID: 1, Name: "a"}, nil
+	stmt, err := r.db.Prepare(`
+-- recursive query for all tags
+WITH RECURSIVE r AS (
+  SELECT tag.tag_id, tag.name, tag.user_id, -1 as parent_id
+    FROM tag
+   WHERE tag.name = $1 AND user_id=$2 -- root tag
+
+   UNION
+
+  SELECT tag.tag_id, tag.name, tag.user_id, tag_relations.parent_tag_id as parent_id
+    FROM tag
+           JOIN tag_relations ON tag.tag_id=tag_relations.child_tag_id
+           JOIN r
+               ON tag_relations.parent_tag_id = r.tag_id AND r.user_id=$2
+)
+SELECT r.tag_id, r.name, r.parent_id, COALESCE(p.count,0) as childs
+  FROM r
+         LEFT JOIN (SELECT count(*), parent_id
+                      FROM r
+                     GROUP BY parent_id) AS p ON p.parent_id=tag_id;
+`)
+	if err != nil {
+		log.Fatal(err)
+		return models.TagNode{}, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(rootTagName, userID)
+	if err != nil {
+		log.Fatal(err)
+		return models.TagNode{}, err
+	}
+	defer rows.Close()
+
+	var rootTag models.TagNode
+	parentTags := make(map[int64]*models.TagNode)
+
+	var tagID int64
+	var tagName string
+	var parentTagID int64
+	var childsCount int64
+
+	// for root tag
+	rows.Next()
+	rows.Scan(&tagID, &tagName, &parentTagID, &childsCount)
+	rootTag = models.TagNode{tagID, tagName, make([]models.TagNode, 0, childsCount)}
+	parentTags[tagID] = &rootTag
+
+	// for others
+	for rows.Next() {
+		rows.Scan(&tagID, &tagName, &parentTagID, &childsCount)
+		parentPtr := parentTags[parentTagID]
+		if parentPtr != nil {
+			parentPtr.ChildTags = append(parentPtr.ChildTags,
+				models.TagNode{tagID, tagName, make([]models.TagNode, 0, childsCount)})
+			parentTags[tagID] = &parentPtr.ChildTags[len(parentPtr.ChildTags)-1]
+		} else {
+			err := fmt.Errorf(
+				"tag (id: %d, name: %s) has undefined parent (id: %d)",
+				tagID, tagName, parentTagID)
+			log.Fatal(err)
+			return models.TagNode{}, err
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+		return models.TagNode{}, err
+	}
+
+	return rootTag, nil
 }
 
 func (r *TagPostgresRepository) GetMetaTag(userID int) (models.TagNode, error) {

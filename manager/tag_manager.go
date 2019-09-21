@@ -70,12 +70,27 @@ func (m *TagManager) GetTagHeader(tags []models.TagNode, user models.User) (mode
 }
 
 func (m *TagManager) GetTagBoardTree(user models.User) (models.TagNode, error) {
-	return models.TagNode{}, nil
+	metaTag, err := m.Repo.GetMetaTag(user.ID)
+	if err != nil {
+		log.Fatalf("%s", err)
+		return models.TagNode{}, err
+	}
+
+	tag, err := m.Repo.GetSubtree(metaTag.Name, user.ID)
+	if err != nil {
+		log.Fatalf("%s", err)
+		return models.TagNode{}, err
+	}
+	return tag, nil
 }
 
 func (m *TagManager) GetSubtreeForTag(tag models.TagNode, user models.User) (models.TagNode, error) {
-	// return models.TagNode{}, nil
-	return m.Repo.GetSubtree(tag.Name, user.ID)
+	tag, err := m.Repo.GetSubtree(tag.Name, user.ID)
+	if err != nil {
+		log.Fatalf("%s", err)
+		return models.TagNode{}, err
+	}
+	return tag, nil
 }
 
 func (m *TagManager) AddRootTag(tagName string, user models.User) error {

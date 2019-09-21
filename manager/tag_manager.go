@@ -84,7 +84,7 @@ func (m *TagManager) GetTagBoardTree(user models.User) (models.TagNode, error) {
 	return tag, nil
 }
 
-func (m *TagManager) GetSubtreeForTag(tag models.TagNode, user models.User) (models.TagNode, error) {
+func (m *TagManager) GetSubtree(tag models.TagNode, user models.User) (models.TagNode, error) {
 	tag, err := m.Repo.GetSubtree(tag.Name, user.ID)
 	if err != nil {
 		log.Fatalf("%s", err)

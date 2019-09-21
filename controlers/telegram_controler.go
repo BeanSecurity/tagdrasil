@@ -89,6 +89,14 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 			} else {
 				msg.Text = tree
 			}
+		case "sub":
+			tree, err := t.getTagBoardSubtree(upd)
+			if err != nil {
+				log.Fatal(err)
+				msg.Text = err.Error()
+			} else {
+				msg.Text = tree
+			}
 		// case "tags":
 		default:
 			msg.Text = "I dont know that command"
@@ -185,6 +193,39 @@ func (t *TelegramControler) getTagBoardTree(upd tgbotapi.Update) (string, error)
 	}
 	tree := treeprint.New()
 	tree.SetValue("#" + tag.Name)
+	for _, tag := range tag.ChildTags {
+		err := t.TagTreeIntoText(tree, tag)
+		if err != nil {
+			log.Fatal(err)
+			return "", err
+		}
+	}
+	return tree.String(), nil
+}
+
+func (t *TelegramControler) getTagBoardSubtree(upd tgbotapi.Update) (string, error) {
+	args := strings.Fields(upd.Message.CommandArguments())
+	if len(args) < 1 {
+		return "", errors.New("not enough arguments")
+	}
+	if len(args) > 1 {
+		return "", errors.New("too many arguments")
+	}
+
+	tagName := args[0]
+	if strings.HasPrefix(tagName, "#") {
+		tagName = tagName[1:]
+	}
+
+	tgUser := upd.Message.From
+	user := mapTgUserToModelUser(*tgUser)
+	tag, err := t.TagManager.GetSubtree(models.TagNode{Name:tagName},user)
+	if err != nil {
+		return "", err
+	}
+
+	tree := treeprint.New()
+	tree.SetValue("---#" + tag.Name)
 	for _, tag := range tag.ChildTags {
 		err := t.TagTreeIntoText(tree, tag)
 		if err != nil {

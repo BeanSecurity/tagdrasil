@@ -51,12 +51,12 @@ func (m *TagManager) GetTagHeader(tags []models.TagNode, user models.User) (mode
 	switch len(tags) {
 	case 0:
 		err := errors.New("empty tags")
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return models.TagNode{}, err
 	case 1:
 		tagLine, err := m.Repo.GetTagLine(tags[0].Name, user.ID)
 		if err != nil {
-			log.Fatalf("%s", err)
+			log.Println("%s", err)
 			return models.TagNode{}, err
 		}
 		return tagLine, nil
@@ -72,13 +72,13 @@ func (m *TagManager) GetTagHeader(tags []models.TagNode, user models.User) (mode
 func (m *TagManager) GetTagBoardTree(user models.User) (models.TagNode, error) {
 	metaTag, err := m.Repo.GetMetaTag(user.ID)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return models.TagNode{}, err
 	}
 
 	tag, err := m.Repo.GetSubtree(metaTag.Name, user.ID)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return models.TagNode{}, err
 	}
 	return tag, nil
@@ -87,7 +87,7 @@ func (m *TagManager) GetTagBoardTree(user models.User) (models.TagNode, error) {
 func (m *TagManager) GetSubtree(tag models.TagNode, user models.User) (models.TagNode, error) {
 	tag, err := m.Repo.GetSubtree(tag.Name, user.ID)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return models.TagNode{}, err
 	}
 	return tag, nil
@@ -96,12 +96,12 @@ func (m *TagManager) GetSubtree(tag models.TagNode, user models.User) (models.Ta
 func (m *TagManager) AddRootTag(tagName string, user models.User) error {
 	metaTag, err := m.Repo.GetMetaTag(user.ID)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return err
 	}
 	err = m.Repo.SaveTag(tagName, metaTag.Name, user.ID)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return err
 	}
 	return nil
@@ -111,7 +111,7 @@ func (m *TagManager) AddRootTag(tagName string, user models.User) error {
 func (m *TagManager) AddLeafTag(childTagName, parentTagName string, user models.User) error {
 	err := m.Repo.SaveTag(childTagName, parentTagName, user.ID)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Println("%s", err)
 		return err
 	}
 	return nil
@@ -129,7 +129,7 @@ func (m *TagManager) DeleteTagByName(tag models.TagNode, user models.User) error
 func (m *TagManager) SaveUser(user models.User) error {
 	err := m.Repo.SaveUser(user)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	// m.

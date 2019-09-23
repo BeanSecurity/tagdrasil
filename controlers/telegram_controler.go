@@ -23,7 +23,7 @@ func NewTelegramControler(token, host, port, debug string, manager manager.TagMa
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 
@@ -35,12 +35,12 @@ func NewTelegramControler(token, host, port, debug string, manager manager.TagMa
 
 	_, err = bot.SetWebhook(tgbotapi.NewWebhook(url))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 	info, err := bot.GetWebhookInfo()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 	if info.LastErrorDate != 0 {
@@ -70,13 +70,13 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 			msg.Text = "hi"
 			err := t.userStart(upd)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				msg.Text = "sorry, еггог"
 			}
 		case "add":
 			err = t.addTags(upd)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				msg.Text = err.Error()
 			} else {
 				msg.Text = "tag added"
@@ -84,7 +84,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		case "tags":
 			tree, err := t.getTagBoardTree(upd)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				msg.Text = err.Error()
 			} else {
 				msg.Text = tree
@@ -92,7 +92,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		case "sub":
 			tree, err := t.getTagBoardSubtree(upd)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				msg.Text = err.Error()
 			} else {
 				msg.Text = tree
@@ -103,7 +103,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 		}
 		_, err = t.bot.Send(msg)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	} else if upd.Message != nil {
 		log.Printf("%+v\n", upd.Message.Text)
@@ -113,20 +113,20 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 
 		tags, err := t.ParseTags(upd.Message.Text)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			_, err = t.bot.Send(tgbotapi.NewMessage(upd.Message.Chat.ID, "sorry, error"))
 		}
 
 		user := mapTgUserToModelUser(*upd.Message.From)
 		tagHeader, err = t.TagManager.GetTagHeader(tags, user)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			_, err = t.bot.Send(tgbotapi.NewMessage(upd.Message.Chat.ID, "sorry, error"))
 		}
 
 		newText, err = t.TagIntoText(tagHeader)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			_, err = t.bot.Send(tgbotapi.NewMessage(upd.Message.Chat.ID, "sorry, error"))
 		}
 
@@ -134,7 +134,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 			upd.Message.Chat.ID,
 			newText))
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
@@ -148,7 +148,7 @@ func (t *TelegramControler) processTelegramUpdate(upd tgbotapi.Update) {
 	// tagHeader := t.TagManager.GetTagHeader(tags, upd.Message.From.ID)
 	// _, err = t.bot.Send(tgbotapi.NewEditMessageText(upd.ChannelPost.From.ID, upd.ChannelPost.MessageID, newText))
 	// if err != nil {
-	// 	log.Fatal(err)
+	// 	log.Println(err)
 	// }
 	// }
 }
@@ -196,7 +196,7 @@ func (t *TelegramControler) getTagBoardTree(upd tgbotapi.Update) (string, error)
 	for _, tag := range tag.ChildTags {
 		err := t.TagTreeIntoText(tree, tag)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return "", err
 		}
 	}
@@ -229,7 +229,7 @@ func (t *TelegramControler) getTagBoardSubtree(upd tgbotapi.Update) (string, err
 	for _, tag := range tag.ChildTags {
 		err := t.TagTreeIntoText(tree, tag)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return "", err
 		}
 	}
@@ -250,7 +250,7 @@ func (t *TelegramControler) TagIntoText(tag models.TagNode) (string, error) {
 	if t.IsLine(tag) {
 		s, err := t.TagLineIntoText(tag)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return "", err
 		}
 		return s, nil
@@ -260,7 +260,7 @@ func (t *TelegramControler) TagIntoText(tag models.TagNode) (string, error) {
 		for _, tag := range tag.ChildTags {
 			err := t.TagTreeIntoText(tree, tag)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				return "", err
 			}
 		}
@@ -286,13 +286,13 @@ func (t *TelegramControler) TagLineIntoText(tag models.TagNode) (string, error) 
 	case 1:
 		s, err := t.TagLineIntoText(tag.ChildTags[0])
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return "", err
 		}
 		return "#" + tag.Name + " -> " + s, nil
 	default:
 		err := errors.New("Tag is not the tag line")
-		log.Fatal(err)
+		log.Println(err)
 		return "", err
 	}
 

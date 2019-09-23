@@ -26,7 +26,7 @@ type TagPostgresRepository struct {
 // func NewTagPostgresRepository(dsn string) *TagPostgresRepository {
 // 	db, err := sql.Open("postgres", dsn)
 // 	if err != nil {
-// 		log.Fatal(err)
+// 		log.Println(err)
 // 	}
 // 	return &TagPostgresRepository{db}
 // 	// return TagPostgresRepository{nil}
@@ -35,7 +35,7 @@ type TagPostgresRepository struct {
 func NewTagPostgresRepository(db *sql.DB) (*TagPostgresRepository, error) {
 	err := db.Ping()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return &TagPostgresRepository{}, err
 	}
 
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS tag_relations (
 
 	_, err = db.Exec(q)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return &TagPostgresRepository{}, err
 	}
 	return &TagPostgresRepository{db}, nil
@@ -94,14 +94,14 @@ WITH RECURSIVE r AS (
 SELECT tag_id,name FROM r;
 `)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(tagName, userID)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	defer rows.Close()
@@ -119,7 +119,7 @@ SELECT tag_id,name FROM r;
 		lastTag = models.TagNode{id, name, []models.TagNode{lastTag}}
 	}
 	if err = rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	if lastTag.Name == "" && lastTag.ID == 0 && lastTag.ChildTags == nil {
@@ -152,14 +152,14 @@ SELECT r.tag_id, r.name, r.parent_id, COALESCE(p.count,0) as childs
                      GROUP BY parent_id) AS p ON p.parent_id=tag_id;
 `)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(rootTagName, userID)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	defer rows.Close()
@@ -190,13 +190,13 @@ SELECT r.tag_id, r.name, r.parent_id, COALESCE(p.count,0) as childs
 			err := fmt.Errorf(
 				"tag (id: %d, name: %s) has undefined parent (id: %d)",
 				tagID, tagName, parentTagID)
-			log.Fatal(err)
+			log.Println(err)
 			return models.TagNode{}, err
 		}
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 
@@ -215,7 +215,7 @@ SELECT tag.tag_id, tag.name
    AND user_id=$1;
 `)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	defer stmt.Close()
@@ -224,7 +224,7 @@ SELECT tag.tag_id, tag.name
 	var tagName string
 	err = stmt.QueryRow(userID).Scan(&tagID, &tagName)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return models.TagNode{}, err
 	}
 	return models.TagNode{ID: tagID, Name: tagName}, nil
@@ -248,14 +248,14 @@ WITH
     VALUES ((SELECT * FROM parent_id), (SELECT * FROM child_id));
 `)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
 	res, err := stmt.Exec(tagName, userID, parentTagName)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	n, err := res.RowsAffected()
@@ -263,7 +263,7 @@ WITH
 		return errors.New("no tag added")
 	}
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	return nil
@@ -286,21 +286,21 @@ INSERT INTO telegram_user (user_id,username, full_name)
 VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;
 `)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	defer stmt.Close()
 
 	res, err := stmt.Exec(user.ID, user.UserName, user.FirstName+user.LastName)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	// if its a new user, add metatag TODO: move to business logic
 	n, err := res.RowsAffected()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	if n != 0 {
@@ -310,7 +310,7 @@ VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;
 			user.ID,
 		)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			return err
 		}
 	}

@@ -18,20 +18,20 @@ func main() {
 	log.Printf("dsn: %s\n", dsn)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return
 	}
 	defer db.Close()
 	tagRepo, err := repository.NewTagPostgresRepository(db)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return
 	}
 
 	//init tag manager
 	tagTgManager, err := manager.NewTagManager(tagRepo)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return
 	}
 
@@ -42,7 +42,7 @@ func main() {
 	debug := os.Getenv("DEBUG")
 	telegramControler, err := controlers.NewTelegramControler(token, host, port, debug, *tagTgManager)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return
 	}
 

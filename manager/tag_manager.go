@@ -1,55 +1,145 @@
-package tagdrasil
+package manager
 
 import (
-	models "tagdrasil/models"
-	repository "tagdrasil/repositories"
+	"errors"
+	"log"
+	"tagdrasil/models"
 )
 
-type TagManager interface {
-	GetTagByName(tagName string) (models.Tag, error)
-	GetTagLine(tag models.Tag) ([]models.Tag, error)
-	GetAllTags() (models.TagTree, error)
-	AddRootTag(tag models.Tag) error
-	AddLeafTag(tag models.Tag) error
-	DeleteTagByName(tagName string) error
+type Repository interface {
+	GetTagByName(tagName string, userID int) (models.TagNode, error)
+	GetTagByID(tagID int64, userID int) (models.TagNode, error)
+	GetTagLine(tagName string, userID int) (models.TagNode, error)
+	GetSubtree(rootTagName string, userID int) (models.TagNode, error)
+	GetMetaTag(userID int) (models.TagNode, error)
+	GetRootTags(userID int) ([]models.TagNode, error)
+	SaveTag(tagName string, parentTagName string, userID int) error
+	DeleteTag(tagName string, userID int) (int, error)
+	GetUserByID(userID int) (models.User, error)
 	SaveUser(user models.User) error
+	DeleteUserByID(userID int) error
 }
 
-type TagTelegramManager struct {
-	TagRepo repository.TagRepository
+type TagManager struct {
+	Repo Repository
 }
 
-func NewTagTelegramManager(repo repository.TagRepository) *TagTelegramManager {
-	return &TagTelegramManager{TagRepo: repo}
+func NewTagManager(repository Repository) (*TagManager, error) {
+	return &TagManager{Repo: repository}, nil
 }
 
-func (m *TagTelegramManager) GetTagByName(tagName string) (models.Tag, error) {
-	return models.Tag{ID: 1, Name: "a"}, nil
+// func (m *TagManager) GetTagByName(tagName string) (models.TagNode, error) {
+// 	m.Repo.GetTagByName(tagName)
+// 	return models.TagNode{ID: 1, Name: "a"}, nil
+// }
+
+// func (m *TagManager) GetTagLine(tag models.TagNode, user models.User) (models.TagLine, error) {
+// 	// return models.tagline{
+// 	// 		models.tagnode{id: 1, name: "a"},
+// 	// 		models.tagnode{id: 1, name: "a"}},
+// 	// 	nil
+// 	tagline, err := m.repo.gettagline(tag.name, user.id)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return tagline, nil
+// 	// return m.repo.gettagline(tag.name, user.id)
+// 	// return m.repo.gettagline(tag.name, user.id)
+// }
+
+func (m *TagManager) GetTagHeader(tags []models.TagNode, user models.User) (models.TagNode, error) {
+	switch len(tags) {
+	case 0:
+		err := errors.New("empty tags")
+		log.Println("%s", err)
+		return models.TagNode{}, err
+	case 1:
+		tagLine, err := m.Repo.GetTagLine(tags[0].Name, user.ID)
+		if err != nil {
+			log.Println("%s", err)
+			return models.TagNode{}, err
+		}
+		return tagLine, nil
+		// default:
+		// 	for _, tag := range tags {
+		// 		tagLine, err := m.Repo.GetTagLine(tag.Name, user.ID)
+		// 	}
+	}
+
+	return models.TagNode{}, nil
 }
 
-func (m *TagTelegramManager) GetTagLine(tag models.Tag) ([]models.Tag, error) {
-	return []models.Tag{
-			models.Tag{ID: 1, Name: "a"},
-			models.Tag{ID: 1, Name: "a"}},
-		nil
+func (m *TagManager) GetTagBoardTree(user models.User) (models.TagNode, error) {
+	metaTag, err := m.Repo.GetMetaTag(user.ID)
+	if err != nil {
+		log.Println("%s", err)
+		return models.TagNode{}, err
+	}
+
+	tag, err := m.Repo.GetSubtree(metaTag.Name, user.ID)
+	if err != nil {
+		log.Println("%s", err)
+		return models.TagNode{}, err
+	}
+	return tag, nil
 }
 
-func (m *TagTelegramManager) GetAllTags() (models.TagTree, error) {
-	return models.TagTree{}, nil
+func (m *TagManager) GetSubtree(tag models.TagNode, user models.User) (models.TagNode, error) {
+	tag, err := m.Repo.GetSubtree(tag.Name, user.ID)
+	if err != nil {
+		log.Println("%s", err)
+		return models.TagNode{}, err
+	}
+	return tag, nil
 }
 
-func (m *TagTelegramManager) AddRootTag(tag models.Tag) error {
+func (m *TagManager) AddRootTag(tagName string, user models.User) error {
+	metaTag, err := m.Repo.GetMetaTag(user.ID)
+	if err != nil {
+		log.Println("%s", err)
+		return err
+	}
+	err = m.Repo.SaveTag(tagName, metaTag.Name, user.ID)
+	if err != nil {
+		log.Println("%s", err)
+		return err
+	}
+	return nil
+
+}
+
+func (m *TagManager) AddLeafTag(childTagName, parentTagName string, user models.User) error {
+	err := m.Repo.SaveTag(childTagName, parentTagName, user.ID)
+	if err != nil {
+		log.Println("%s", err)
+		return err
+	}
 	return nil
 }
 
-func (m *TagTelegramManager) AddLeafTag(tag models.Tag) error {
+func (m *TagManager) DeleteTagByName(tag models.TagNode, user models.User) error {
+	// you cant delete metatag
 	return nil
 }
 
-func (m *TagTelegramManager) DeleteTagByName(tagName string) error {
+// func (m *TagManager) CheckUser(user models.User) error {
+// 	return nil
+// }
+
+func (m *TagManager) SaveUser(user models.User) error {
+	err := m.Repo.SaveUser(user)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	// m.
 	return nil
 }
 
-func (r *TagTelegramManager) SaveUser(user models.User) error {
+func (m *TagManager) GetUserByID(userID int) (models.User, error) {
+	return models.User{}, nil
+}
+
+func (m *TagManager) DeleteUserByID(userID int) error {
 	return nil
 }
